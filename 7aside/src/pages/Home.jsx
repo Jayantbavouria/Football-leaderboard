@@ -7,11 +7,13 @@ function Home() {
   const [standingsB, setStandingsB] = useState([])
   const [topPlayers, setTopPlayers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState('')
 
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true)
+        setFetchError('')
         // 1. Fetch Teams
         const { data: teamsData, error: teamsError } = await supabase
           .from('teams')
@@ -80,6 +82,7 @@ function Home() {
         setTopPlayers(playersData || [])
       } catch (error) {
         console.error("Error fetching data:", error)
+        setFetchError(error.message || JSON.stringify(error))
       } finally {
         setLoading(false)
       }
@@ -89,6 +92,16 @@ function Home() {
   }, [])
 
   if (loading) return <div style={{textAlign: 'center', marginTop: '4rem'}}><div className="loader"></div></div>
+
+  if (fetchError) {
+    return (
+      <div style={{textAlign: 'center', marginTop: '4rem', color: '#ff4444'}}>
+        <h2>Database Error!</h2>
+        <p>Please check your Supabase Setup.</p>
+        <code style={{padding: '1rem', background: 'rgba(255,0,0,0.1)', display: 'block', maxWidth: '600px', margin: '1rem auto'}}>{fetchError}</code>
+      </div>
+    )
+  }
 
   const renderTable = (title, data) => (
     <div className="glass-card table-container" style={{ gridColumn: window.innerWidth > 768 ? 'span 2' : 'span 1', marginBottom: '2rem' }}>
