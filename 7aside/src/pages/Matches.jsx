@@ -39,46 +39,46 @@ function Matches() {
   if (loading) return <div style={{textAlign: 'center', marginTop: '4rem'}}><div className="loader"></div></div>
 
   return (
-    <div className="glass-card" style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
-        <CalendarIcon size={24} /> Fixtures & Results
+    <div className="glass-card animate-in delay-1" style={{ maxWidth: '850px', margin: '0 auto' }}>
+      <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem', color: '#ffffff' }}>
+        <CalendarIcon size={26} color="var(--accent-secondary)" /> Fixtures & Results
       </h2>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {matches.length === 0 ? (
-          <p style={{textAlign: 'center', color: 'var(--text-muted)'}}>No matches scheduled yet.</p>
-        ) : matches.map(match => {
+          <p style={{textAlign: 'center', padding: '3rem', color: 'var(--text-muted)'}}>No matches scheduled yet.</p>
+        ) : matches.map((match, idx) => {
           const homeT = teams[match.home_team_id]
           const awayT = teams[match.away_team_id]
           
           if (!homeT || !awayT) return null;
 
           return (
-            <div key={match.id} className="match-card" style={{ padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+            <div key={match.id} className={`match-card animate-in delay-${(idx % 3) + 1}`}>
               <div className="match-header">
-                <span className="badge badge-blue" style={{textTransform: 'uppercase'}}>
+                <span className="badge badge-blue">
                   {match.stage === 'group' ? `Group ${match.group_name || 'Stage'}` : match.stage === 'semi' ? 'Semi-Final' : match.stage === 'final' ? 'Final' : (match.stage || 'Group Stage')}
                 </span>
-                {match.match_date && <span style={{display: 'flex', alignItems: 'center', gap: '0.4rem'}}><Clock size={14}/> {format(parseISO(match.match_date), 'MMM d, yyyy')}</span>}
+                {match.match_date && <span style={{display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)'}}><Clock size={14}/> {format(parseISO(match.match_date), 'MMM d, yyyy')}</span>}
               </div>
               
               <div className="match-teams">
                 <div className="match-team">
                   <div className="team-logo">{homeT.logo_url ? <img src={homeT.logo_url}/> : homeT.name.substring(0,2).toUpperCase()}</div>
-                  <span style={{fontWeight: 600}}>{homeT.name}</span>
+                  <span style={{fontWeight: 700, fontSize: '1.1rem'}}>{homeT.name}</span>
                 </div>
                 
                 <div className="match-score">
                   {match.is_played ? (
-                    <><span>{match.home_score}</span> - <span>{match.away_score}</span></>
+                    <><span style={{color: 'var(--accent-primary)'}}>{match.home_score}</span> <span style={{color: 'var(--text-muted)'}}>-</span> <span style={{color: 'var(--accent-primary)'}}>{match.away_score}</span></>
                   ) : (
-                    <span style={{fontSize: '1rem', color: 'var(--text-secondary)', padding: '0 1rem'}}>vs</span>
+                    <span style={{fontSize: '0.9rem', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '0.3rem 0.8rem', borderRadius: '4px', letterSpacing: '2px'}}>VS</span>
                   )}
                 </div>
                 
                 <div className="match-team away">
                   <div className="team-logo">{awayT.logo_url ? <img src={awayT.logo_url}/> : awayT.name.substring(0,2).toUpperCase()}</div>
-                  <span style={{fontWeight: 600}}>{awayT.name}</span>
+                  <span style={{fontWeight: 700, fontSize: '1.1rem'}}>{awayT.name}</span>
                 </div>
               </div>
             </div>
