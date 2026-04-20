@@ -22,7 +22,7 @@ function Matches() {
         const { data: matchesData, error: matchesError } = await supabase
           .from('matches')
           .select('*')
-          .order('match_date', { ascending: false })
+          .order('match_date', { ascending: true })
           
         if (matchesError) throw matchesError
         

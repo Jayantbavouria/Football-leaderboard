@@ -77,7 +77,7 @@ function Admin() {
   }
 
   async function fetchMatches() {
-    const { data } = await supabase.from('matches').select('*').order('match_date', { ascending: false })
+    const { data } = await supabase.from('matches').select('*').order('match_date', { ascending: true })
     if(data) setMatches(data)
   }
 
