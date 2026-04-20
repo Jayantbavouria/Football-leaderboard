@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 function Home() {
   const [standingsA, setStandingsA] = useState([])
   const [standingsB, setStandingsB] = useState([])
+  const [knockoutMatches, setKnockoutMatches] = useState({ semi: [], final: [] })
   const [topGoalscorers, setTopGoalscorers] = useState([])
   const [topAssists, setTopAssists] = useState([])
   const [loading, setLoading] = useState(true)
@@ -20,7 +21,7 @@ function Home() {
           .from('teams')
           .select('*')
         
-        // 2. Fetch Played Matches
+        // 2. Fetch All Played Matches for Standings and Semi/Finals
         const { data: matchesData, error: matchesError } = await supabase
           .from('matches')
           .select('*')
@@ -55,13 +56,15 @@ function Home() {
             }))
 
           matchesData.forEach(match => {
+            if (match.stage !== 'group') return; // Only group stage matches affect the leaderboard
+
             let home = table.find(t => t.id === match.home_team_id)
             let away = table.find(t => t.id === match.away_team_id)
 
             if(!home || !away) return; // Only process if both teams are in this group
 
-            home.p += 1; home.gf += match.home_score; home.ga += match.away_score;
-            away.p += 1; away.gf += match.away_score; away.ga += match.home_score;
+            home.p += 1; home.gf += (match.home_score || 0); home.ga += (match.away_score || 0);
+            away.p += 1; away.gf += (match.away_score || 0); away.ga += (match.home_score || 0);
 
             if (match.home_score > match.away_score) {
               home.w += 1; home.pts += 3;
@@ -88,6 +91,14 @@ function Home() {
 
         setStandingsA(calculateTable('A'))
         setStandingsB(calculateTable('B'))
+        
+        // Organize knockout matches
+        const ko = {
+          semi: matchesData.filter(m => m.stage === 'semi'),
+          final: matchesData.filter(m => m.stage === 'final')
+        }
+        setKnockoutMatches(ko)
+
         setTopGoalscorers(goalsData || [])
         setTopAssists(assistsData || [])
       } catch (error) {
@@ -112,7 +123,6 @@ function Home() {
       </div>
     )
   }
-
   const renderTable = (title, data, delayClass = 'delay-1') => (
     <div className={`glass-card table-container animate-in ${delayClass}`} style={{ gridColumn: window.innerWidth > 768 ? 'span 2' : 'span 1', marginBottom: '2rem' }}>
       <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', color: '#ffffff' }}>
@@ -164,6 +174,71 @@ function Home() {
       </table>
     </div>
   )
+  const renderKnockout = () => {
+    const getTeam = (id) => standingsA.concat(standingsB).find(t => t.id === id) || { name: 'TBD' }
+    
+    return (
+      <div className="glass-card knockout-section animate-in delay-2" style={{ gridColumn: 'span 2', marginTop: '2rem' }}>
+        <h2 className="knockout-header" style={{ textAlign: 'center', marginBottom: '3rem', fontSize: '2.5rem' }}>
+          Champions League Phase
+        </h2>
+        
+        <div className="bracket-container">
+          {/* Semi Finals */}
+          <div className="bracket-column">
+            <h3 className="stage-title">Semi-Finals</h3>
+            <div className="matches-wrapper">
+              {knockoutMatches.semi.length === 0 ? (
+                <div className="bracket-match placeholder">Waiting for fixtures...</div>
+              ) : knockoutMatches.semi.map(m => {
+                const home = getTeam(m.home_team_id)
+                const away = getTeam(m.away_team_id)
+                return (
+                  <div key={m.id} className="bracket-match animate-in">
+                    <div className={`bracket-team ${m.home_score > m.away_score ? 'winner' : ''}`}>
+                      <span className="team-name">{home.name}</span>
+                      <span className="team-score">{m.home_score}</span>
+                    </div>
+                    <div className="bracket-divider"></div>
+                    <div className={`bracket-team ${m.away_score > m.home_score ? 'winner' : ''}`}>
+                      <span className="team-name">{away.name}</span>
+                      <span className="team-score">{m.away_score}</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Finals */}
+          <div className="bracket-column">
+            <h3 className="stage-title">Grand Final</h3>
+            <div className="matches-wrapper">
+              {knockoutMatches.final.length === 0 ? (
+                <div className="bracket-match placeholder">Waiting for finalists...</div>
+              ) : knockoutMatches.final.map(m => {
+                const home = getTeam(m.home_team_id)
+                const away = getTeam(m.away_team_id)
+                return (
+                  <div key={m.id} className="bracket-match final-match animate-in">
+                    <div className={`bracket-team ${m.home_score > m.away_score ? 'winner-final' : ''}`}>
+                      <span className="team-name">{home.name}</span>
+                      <span className="team-score">{m.home_score}</span>
+                    </div>
+                    <div className="bracket-divider"></div>
+                    <div className={`bracket-team ${m.away_score > m.home_score ? 'winner-final' : ''}`}>
+                      <span className="team-name">{away.name}</span>
+                      <span className="team-score">{m.away_score}</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="grid-2">
@@ -171,6 +246,8 @@ function Home() {
         {renderTable("Group A - Leaderboard", standingsA, "delay-1")}
         {renderTable("Group B - Leaderboard", standingsB, "delay-2")}
       </div>
+
+      {renderKnockout()}
 
       <div className="stats-grid" style={{ gridColumn: window.innerWidth > 768 ? 'span 2' : 'span 1', display: 'grid', gridTemplateColumns: window.innerWidth > 900 ? '1fr 1fr' : '1fr', gap: '2rem' }}>
         <div className="glass-card animate-in delay-3">
